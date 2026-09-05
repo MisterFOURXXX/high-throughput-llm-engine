@@ -1,0 +1,13 @@
+sweeps:
+  - concurrency: 10
+    block_size: 16
+    duration: 30
+  - concurrency: 100
+    block_size: 16
+    duration: 60
+  - concurrency: 500
+    block_size: 32
+    duration: 120
+  - concurrency: 1000
+    block_size: 64
+    duration: 180
