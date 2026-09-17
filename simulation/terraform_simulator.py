@@ -1,18 +1,18 @@
 """
-Terraform Simulator - offline, deterministic.
+Terraform simulator - offline, deterministic.
+Generates mock OCI resources without any cloud credentials.
 """
 import json
 import random
 from dataclasses import dataclass, asdict, field
 from typing import Dict, List, Optional, Any
-from datetime import datetime
 
 
 @dataclass
 class TerraformResource:
     type: str
     name: str
-    attributes: Dict[str, any]
+    attributes: Dict[str, Any]
     provider: str = "oci"
     id: str = ""
 
@@ -25,19 +25,11 @@ class Cluster:
     placement_group_name: str
     region: str = "eu-frankfurt-1"
 
-    def to_json(self) -> str:
-        return json.dumps({
-            "cluster_name": self.name, "region": self.region,
-            "placement_group": self.placement_group_name,
-            "nodes": [asdict(i) for i in self.instances],
-            "total_nodes": self.total_nodes,
-        }, indent=2)
-
 
 @dataclass
 class TerraformState:
     resources: List[TerraformResource] = field(default_factory=list)
-    outputs: Dict[str, any] = field(default_factory=dict)
+    outputs: Dict[str, Any] = field(default_factory=dict)
     version: int = 4
 
 
@@ -52,7 +44,8 @@ class TerraformSimulator:
         self.cluster_name = ""
 
     def _ip(self) -> str:
-        return f"{self._rng.randint(10, 250)}.{self._rng.randint(1, 250)}.{self._rng.randint(1, 250)}.{self._rng.randint(1, 250)}"
+        r = self._rng
+        return f"{r.randint(10, 250)}.{r.randint(1, 250)}.{r.randint(1, 250)}.{r.randint(1, 250)}"
 
     def _id(self, prefix: str) -> str:
         return f"{prefix}-{''.join(self._rng.choices('abcdef0123456789', k=17))}"
@@ -130,18 +123,13 @@ class TerraformSimulator:
         return self.resources_by_type.get(resource_type)
 
     def terraform_test(self, test_config: Dict) -> Dict:
+        assertions = test_config.get("assertions", [])
         return {
             "tests": [{"name": f"test_{i}", "passed": True}
-                      for i, _ in enumerate(test_config.get("assertions", []))],
-            "passed": len(test_config.get("assertions", [])),
+                      for i, _ in enumerate(assertions)],
+            "passed": len(assertions),
             "failed": 0,
         }
-
-    def generate_terraform_plan(self) -> str:
-        if not self.cluster_name:
-            return "# Error: No cluster defined"
-        return (f"# Terraform Plan for {self.cluster_name}\n"
-                f"Plan: {self.state.outputs.get('total_nodes', 2)} to add.\n")
 
     def export_state(self, format: str = "json") -> str:
         state_dict = {

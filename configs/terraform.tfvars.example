@@ -1,10 +1,8 @@
-# Copy to terraform.tfvars and fill in real values
-# ONLY needed for actual deployment (make terraform-apply)
-
+# Copy to terraform.tfvars and fill in real values (only needed for terraform apply)
 tenancy_ocid     = "ocid1.tenancy.oc1..aaaa..."
 user_ocid        = "ocid1.user.oc1..aaaa..."
 fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
-private_key_path = "/home/ubuntu/high-throughput-llm-engine/key/ssh-key-2026-09-11.key"
+private_key_path = "~/.oci/oci_api_key.pem"
 compartment_ocid = "ocid1.compartment.oc1..aaaa..."
 region           = "eu-frankfurt-1"
 
@@ -12,9 +10,9 @@ ssh_public_key      = "ssh-rsa AAAAB3..."
 instance_image_ocid = "ocid1.image.oc1..aaaa..."
 
 node_count          = 2
-instance_shape      = "VM.Standard.A1.Flex"   # ARM, free tier eligible
+instance_shape      = "VM.Standard.A1.Flex"
 instance_ocpus      = 4
 instance_memory_gb  = 24
 boot_volume_size_gb = 50
 
-container_image_url = ""  # Leave empty to skip
+container_image_url = ""

@@ -1,5 +1,6 @@
 """
-Kubernetes Operator Simulator - deterministic.
+Kubernetes Operator simulator for NCCL jobs.
+Deterministic reconciliation loop: PENDING -> RUNNING -> SUCCEEDED.
 """
 import random
 from dataclasses import dataclass, field
@@ -78,15 +79,10 @@ class KubernetesOperatorSimulator:
         return job
 
     def reconcile(self, job_name: str) -> Dict[str, Any]:
-        """
-        Single reconciliation pass. Moves pods PENDING -> RUNNING -> SUCCEEDED
-        deterministically across successive calls.
-        """
         if job_name not in self.jobs:
             return {"status": "error", "message": "job not found"}
 
         job = self.jobs[job_name]
-
         for pod in job.pods:
             if pod.status == PodStatus.PENDING:
                 pod.status = PodStatus.RUNNING
@@ -121,28 +117,11 @@ class KubernetesOperatorSimulator:
         }
 
     def run_job_to_completion(self, job_name: str,
-                              max_attempts: int = 20,
-                              sleep_interval: float = 0.0) -> Dict[str, Any]:
-        """
-        Loop reconcile until the job reaches a terminal state.
-        Fixes the bug where a single reconcile call only moved pods to RUNNING.
-        """
+                              max_attempts: int = 20) -> Dict[str, Any]:
+        """Loop reconcile until job reaches Succeeded or Failed."""
         result = self.reconcile(job_name)
         attempt = 0
         while result.get("status") not in ("Succeeded", "Failed") and attempt < max_attempts:
             result = self.reconcile(job_name)
             attempt += 1
         return result
-
-    def get_job_metrics(self, job_name: str) -> Dict[str, Any]:
-        if job_name not in self.jobs:
-            return {"error": "Job not found"}
-        job = self.jobs[job_name]
-        return {
-            "job_name": job_name,
-            "status": job.status,
-            "total_ranks": job.total_ranks,
-            "num_nodes": job.num_nodes,
-            "gpus_per_node": job.gpus_per_node,
-            "completion_time_sec": job.completion_time,
-        }

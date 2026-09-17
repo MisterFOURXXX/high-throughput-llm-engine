@@ -1,5 +1,5 @@
 """
-Orchestrator: NCCL vs XDP vs Gloo.
+Orchestrator: NCCL vs XDP vs Gloo comparison with real resource measurement.
 """
 import json
 import os
@@ -13,13 +13,15 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from .nccl_simulator       import NCCLSimulator, NCCLConfig
-from .xdp_simulator        import XDPSimulator,  XDPConfig
-from .gloo_simulator       import GlooSimulator, GlooConfig
-from .ebpf_simulator       import eBPFSimulator
+from .backends import (
+    NCCLSimulator, NCCLConfig,
+    XDPSimulator,  XDPConfig,
+    GlooSimulator, GlooConfig,
+)
+from .ebpf_simulator import eBPFSimulator
 from .k8s_operator_simulator import KubernetesOperatorSimulator
-from .terraform_simulator    import TerraformSimulator
-from .resource_monitor       import ResourceMonitor
+from .terraform_simulator import TerraformSimulator
+from .resource_monitor import ResourceMonitor
 
 
 class SimulationConfig:
@@ -80,10 +82,11 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     results: Dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
         "cloud": "oracle-oci",
+        "seed": config.seed,
         "config": vars(config),
     }
 
-    # ---------------- Step 1: Terraform ----------------
+    # ----- Step 1: Terraform -----
     print()
     print("STEP 1 - Terraform Infrastructure")
     print("-" * 78)
@@ -106,10 +109,10 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print(f"  Node count         : {config.num_nodes}")
     print(f"  Instance type      : {config.instance_type}")
     print(f"  Region             : {config.region}")
-    for i, ip in enumerate(cluster['outputs']['instance_ips']):
+    for i, ip in enumerate(cluster["outputs"]["instance_ips"]):
         print(f"  Node {i} IP          : {ip}")
 
-    # ---------------- Step 2: Terraform tests ----------------
+    # ----- Step 2: Terraform tests -----
     print()
     print("STEP 2 - Terraform Config Tests")
     print("-" * 78)
@@ -117,7 +120,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print("  Tests passed       : 2")
     print("  Tests failed       : 0")
 
-    # ---------------- Step 3: K8s ----------------
+    # ----- Step 3: K8s -----
     print()
     print("STEP 3 - Kubernetes Operator Orchestration")
     print("-" * 78)
@@ -136,7 +139,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print(f"  Total ranks        : {job.total_ranks}")
     print(f"  Completion time    : {job_result.get('completion_time_sec', 0.0):.3f} s")
 
-    # ---------------- Step 4: NCCL ----------------
+    # ----- Step 4: NCCL -----
     print()
     print("STEP 4 - NCCL Simulation (RDMA)")
     print("-" * 78)
@@ -165,7 +168,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print(f"  CPU usage (%)      : {mon_nccl.cpu_percent:.2f}")
     print(f"  RSS memory (MB)    : {mon_nccl.rss_mb:.2f}")
 
-    # ---------------- Step 5: XDP ----------------
+    # ----- Step 5: XDP -----
     print()
     print("STEP 5 - XDP Simulation (AF_XDP kernel-bypass)")
     print("-" * 78)
@@ -194,7 +197,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print(f"  CPU usage (%)      : {mon_xdp.cpu_percent:.2f}")
     print(f"  RSS memory (MB)    : {mon_xdp.rss_mb:.2f}")
 
-    # ---------------- Step 6: Gloo ----------------
+    # ----- Step 6: Gloo -----
     print()
     print("STEP 6 - Gloo Simulation (TCP baseline)")
     print("-" * 78)
@@ -222,7 +225,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print(f"  CPU usage (%)      : {mon_gloo.cpu_percent:.2f}")
     print(f"  RSS memory (MB)    : {mon_gloo.rss_mb:.2f}")
 
-    # ---------------- Step 7: Comparison ----------------
+    # ----- Step 7: Comparison -----
     print()
     print("STEP 7 - Backend Comparison")
     print("-" * 78)
@@ -247,7 +250,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print(f"  Speedup XDP  vs Gloo     : {su_xdp_gloo:10.2f}x")
     print(f"  Speedup NCCL vs XDP      : {su_nccl_xdp:10.2f}x")
 
-    # ---------------- Step 8: eBPF ----------------
+    # ----- Step 8: eBPF -----
     print()
     print("STEP 8 - eBPF / bpfd Network Monitoring")
     print("-" * 78)
@@ -268,7 +271,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     print(f"  P99 latency (us)   : {stats['p99_latency_ns']/1000:.2f}")
     print(f"  Packet drop rate   : {stats.get('packet_drop_rate', 0.0)*100:.3f}%")
 
-    # ---------------- Step 9: Plots ----------------
+    # ----- Step 9: Plots -----
     print()
     print("STEP 9 - Generating Plots")
     print("-" * 78)
@@ -276,7 +279,7 @@ def run_simulation(config: Optional[SimulationConfig] = None,
                     gloo_trace["trace"], ebpf.to_dataframe(),
                     results, output_dir)
 
-    # ---------------- Step 10: Report ----------------
+    # ----- Step 10: Save report -----
     report_path = f"{output_dir}/simulation_report.json"
     with open(report_path, "w") as f:
         json.dump(results, f, indent=2)
@@ -290,9 +293,9 @@ def run_simulation(config: Optional[SimulationConfig] = None,
     return results
 
 
-# ============================================================
-# Plotting
-# ============================================================
+# ====================================================================
+# Plotting (10 publication-grade plots)
+# ====================================================================
 def _generate_plots(nccl_df, xdp_df, gloo_df, ebpf_df, results, output_dir):
     plt.style.use("default")
     BACKEND_COLORS = {"NCCL": "#1f77b4", "XDP": "#2ca02c", "Gloo": "#d62728"}
@@ -302,9 +305,12 @@ def _generate_plots(nccl_df, xdp_df, gloo_df, ebpf_df, results, output_dir):
     width = 0.25
     collectives = ["AllReduce", "AllGather", "ReduceScatter", "Broadcast"]
     x = np.arange(len(collectives))
-    for i, (df, name) in enumerate([(nccl_df, "NCCL"), (xdp_df, "XDP"), (gloo_df, "Gloo")]):
+    for i, (df, name) in enumerate([(nccl_df, "NCCL"),
+                                    (xdp_df, "XDP"),
+                                    (gloo_df, "Gloo")]):
         means = [df[df["collective"] == c]["latency_ms"].mean() for c in collectives]
-        ax.bar(x + i * width, means, width, label=name, color=BACKEND_COLORS[name], alpha=0.85)
+        ax.bar(x + i * width, means, width, label=name,
+               color=BACKEND_COLORS[name], alpha=0.85)
     ax.set_xticks(x + width)
     ax.set_xticklabels(collectives)
     ax.set_ylabel("Mean Latency (ms)")
@@ -390,9 +396,12 @@ def _generate_plots(nccl_df, xdp_df, gloo_df, ebpf_df, results, output_dir):
     pct_labels = ["p50", "p95", "p99"]
     x = np.arange(len(pct_labels))
     width = 0.25
-    for i, (df, name) in enumerate([(nccl_df, "NCCL"), (xdp_df, "XDP"), (gloo_df, "Gloo")]):
+    for i, (df, name) in enumerate([(nccl_df, "NCCL"),
+                                    (xdp_df, "XDP"),
+                                    (gloo_df, "Gloo")]):
         vals = [np.percentile(df["latency_ms"], p) for p in (50, 95, 99)]
-        ax.bar(x + i * width, vals, width, label=name, color=BACKEND_COLORS[name], alpha=0.85)
+        ax.bar(x + i * width, vals, width, label=name,
+               color=BACKEND_COLORS[name], alpha=0.85)
     ax.set_xticks(x + width)
     ax.set_xticklabels(pct_labels)
     ax.set_ylabel("Latency (ms)")
@@ -447,25 +456,27 @@ def _generate_plots(nccl_df, xdp_df, gloo_df, ebpf_df, results, output_dir):
 
     bars1 = ax1.bar(backends, cpu_vals, color=colors, alpha=0.85)
     for bar, val in zip(bars1, cpu_vals):
-        ax1.text(bar.get_x() + bar.get_width() / 2, val + max(cpu_vals) * 0.02,
-                 f"{val:.1f}%", ha="center", va="bottom")
+        ax1.text(bar.get_x() + bar.get_width() / 2,
+                 val + max(cpu_vals) * 0.02,
+                 f"{val:.2f}%", ha="center", va="bottom")
     ax1.set_ylabel("CPU Usage (%)")
-    ax1.set_title("Peak CPU Usage per Backend")
+    ax1.set_title("CPU Usage per Backend")
     ax1.grid(True, alpha=0.3, axis="y")
 
     bars2 = ax2.bar(backends, mem_vals, color=colors, alpha=0.85)
     for bar, val in zip(bars2, mem_vals):
-        ax2.text(bar.get_x() + bar.get_width() / 2, val + max(mem_vals) * 0.02,
+        ax2.text(bar.get_x() + bar.get_width() / 2,
+                 val + max(mem_vals) * 0.02,
                  f"{val:.1f} MB", ha="center", va="bottom")
     ax2.set_ylabel("RSS Memory (MB)")
-    ax2.set_title("Peak Memory per Backend")
+    ax2.set_title("Memory Usage per Backend")
     ax2.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
     plt.savefig(f"{output_dir}/09_resource_usage.png", dpi=200)
     plt.close()
 
-    # 10. Latency vs Resource trade-off
+    # 10. Performance vs Resource trade-off
     fig, ax = plt.subplots(figsize=(10, 6))
     totals = [
         nccl_df["latency_ms"].sum(),
@@ -473,8 +484,8 @@ def _generate_plots(nccl_df, xdp_df, gloo_df, ebpf_df, results, output_dir):
         gloo_df["latency_ms"].sum(),
     ]
     for i, name in enumerate(backends):
-        ax.scatter(totals[i], cpu_vals[i],
-                   s=300, color=BACKEND_COLORS[name], alpha=0.75,
+        ax.scatter(totals[i], cpu_vals[i], s=350,
+                   color=BACKEND_COLORS[name], alpha=0.75,
                    edgecolors="black", linewidths=1.5)
         ax.annotate(name, (totals[i], cpu_vals[i]),
                     xytext=(10, 10), textcoords="offset points", fontsize=12)
@@ -485,3 +496,5 @@ def _generate_plots(nccl_df, xdp_df, gloo_df, ebpf_df, results, output_dir):
     plt.tight_layout()
     plt.savefig(f"{output_dir}/10_tradeoff.png", dpi=200)
     plt.close()
+
+    print("  [done] 10 plots generated")

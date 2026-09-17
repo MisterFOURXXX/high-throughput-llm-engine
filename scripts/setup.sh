@@ -6,12 +6,13 @@ cd "$REPO_ROOT"
 LOG=/tmp/llm-engine-setup.log
 : > "$LOG"
 
+# 1. System packages
 sudo apt-get update -qq >>"$LOG" 2>&1
 sudo apt-get install -y -qq \
     build-essential cmake curl unzip git wget jq \
-    libcurl4-openssl-dev \
     python3 python3-pip python3-venv python3-full >>"$LOG" 2>&1
 
+# 2. Terraform
 if ! command -v terraform >/dev/null 2>&1; then
     ARCH=$(dpkg --print-architecture)
     cd /tmp
@@ -22,12 +23,14 @@ if ! command -v terraform >/dev/null 2>&1; then
     cd "$REPO_ROOT"
 fi
 
+# 3. Python venv + deps
 python3 -m venv venv >>"$LOG" 2>&1
 source venv/bin/activate
 pip install --upgrade pip -q >>"$LOG" 2>&1
 pip install -q -r requirements.txt >>"$LOG" 2>&1
 pip install -q -e . >>"$LOG" 2>&1
 
+# 4. Terraform init
 (cd "$REPO_ROOT/configs" && terraform init -upgrade -no-color) >>"$LOG" 2>&1 || true
 
 echo "Setup complete."

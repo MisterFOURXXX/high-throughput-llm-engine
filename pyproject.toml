@@ -12,6 +12,7 @@ dependencies = [
     "pandas>=2.0.0",
     "matplotlib>=3.7.0",
     "seaborn>=0.12.0",
+    "psutil>=5.9.0",
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
 ]
@@ -20,7 +21,7 @@ dependencies = [
 test = ["pytest>=7.0.0"]
 
 [tool.setuptools.packages.find]
-include = ["simulation*", "src*"]
+include = ["simulation*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

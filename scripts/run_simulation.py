@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Run NCCL vs XDP vs Gloo simulation."""
-import sys, os, argparse, json
+"""CLI entry point for the collective communication simulator."""
+import sys
+import argparse
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -11,7 +13,7 @@ from simulation import run_simulation, SimulationConfig
 
 
 def main():
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(description="NCCL vs XDP vs Gloo simulation")
     p.add_argument("--nodes", type=int, default=2)
     p.add_argument("--gpus-per-node", type=int, default=4)
     p.add_argument("--iterations", type=int, default=50)
@@ -28,13 +30,17 @@ def main():
     args = p.parse_args()
 
     cfg = SimulationConfig(
-        num_nodes=args.nodes, gpus_per_node=args.gpus_per_node,
-        num_iterations=args.iterations, model_size_mb=args.model_size,
+        num_nodes=args.nodes,
+        gpus_per_node=args.gpus_per_node,
+        num_iterations=args.iterations,
+        model_size_mb=args.model_size,
         gradient_size_mb=args.gradient_size,
         network_bandwidth_gbps=args.bandwidth,
-        region=args.region, instance_type=args.instance_type,
+        region=args.region,
+        instance_type=args.instance_type,
         use_real_terraform=args.use_real_terraform,
-        terraform_dir=args.terraform_dir, seed=args.seed,
+        terraform_dir=args.terraform_dir,
+        seed=args.seed,
     )
     r = run_simulation(cfg, output_dir=args.output_dir)
     if args.json:

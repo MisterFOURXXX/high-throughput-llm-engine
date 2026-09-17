@@ -1,6 +1,4 @@
-"""
-pytest conftest — adds repo root to sys.path so tests can import src/ and simulation/.
-"""
+"""Ensure the repo root is importable during pytest."""
 import sys
 from pathlib import Path
 
