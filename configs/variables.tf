@@ -1,60 +1,90 @@
-# ============================================
-# configs/variables.tf
-# ============================================
-
-variable "aws_region" {
-  description = "AWS region for deployment"
+variable "tenancy_ocid" {
+  description = "OCI Tenancy OCID"
   type        = string
-  default     = "eu-central-1"
+  default     = "ocid1.tenancy.oc1..placeholder"
+}
+
+variable "user_ocid" {
+  description = "OCI User OCID"
+  type        = string
+  default     = "ocid1.user.oc1..placeholder"
+}
+
+variable "fingerprint" {
+  description = "OCI API key fingerprint"
+  type        = string
+  default     = "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+}
+
+variable "private_key_path" {
+  description = "Path to OCI private key"
+  type        = string
+  default     = "~/.oci/oci_api_key.pem"
+}
+
+variable "region" {
+  description = "OCI region"
+  type        = string
+  default     = "eu-frankfurt-1"
+}
+
+variable "compartment_ocid" {
+  description = "Compartment OCID"
+  type        = string
+  default     = "ocid1.compartment.oc1..placeholder"
 }
 
 variable "cluster_name" {
-  description = "Name of the cluster"
-  type        = string
-  default     = "nccl-cluster"
+  type    = string
+  default = "nccl-cluster"
 }
 
 variable "node_count" {
-  description = "Number of GPU nodes to provision"
-  type        = number
-  default     = 2
+  type    = number
+  default = 2
 }
 
-variable "instance_type" {
-  description = "EC2 instance type for GPU nodes"
-  type        = string
-  default     = "g5.12xlarge"
+variable "instance_shape" {
+  type    = string
+  default = "VM.GPU.A10.1"
 }
 
-variable "ami_id" {
-  description = "AMI ID for the GPU instances (Deep Learning AMI recommended)"
-  type        = string
-  default     = "ami-0abcdef1234567890"
+variable "instance_ocpus" {
+  type    = number
+  default = 4
 }
 
-variable "ssh_key_name" {
-  description = "Name of the SSH key pair to use for EC2 instances"
-  type        = string
+variable "instance_memory_gb" {
+  type    = number
+  default = 64
 }
 
-variable "ecr_repository_url" {
-  description = "URL of the ECR repository containing the multi-node Docker image"
-  type        = string
-  default     = ""
+variable "instance_image_ocid" {
+  type    = string
+  default = "ocid1.image.oc1..placeholder"
 }
 
-variable "vpc_id" {
-  description = "VPC ID for the security group"
-  type        = string
-  default     = ""
+variable "boot_volume_size_gb" {
+  type    = number
+  default = 200
 }
 
-variable "tags" {
-  description = "Tags for resources"
-  type        = map(string)
-  default = {
-    Project     = "High-Throughput-LLM-Engine"
-    Environment = "development"
-    ManagedBy   = "Terraform"
-  }
+variable "create_network" {
+  type    = bool
+  default = true
+}
+
+variable "subnet_id" {
+  type    = string
+  default = ""
+}
+
+variable "ssh_public_key" {
+  type    = string
+  default = "ssh-rsa AAAAB3NzaC1yc2E... placeholder"
+}
+
+variable "container_image_url" {
+  type    = string
+  default = ""
 }

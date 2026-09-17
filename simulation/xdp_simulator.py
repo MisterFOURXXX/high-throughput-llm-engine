@@ -1,6 +1,6 @@
 """
-NCCL (RDMA / InfiniBand-class) collective communication model.
-Deterministic when run with a fixed seed.
+XDP (AF_XDP kernel-bypass) collective communication model.
+Latency between NCCL and Gloo. Deterministic when seeded.
 """
 import random
 import numpy as np
@@ -9,31 +9,33 @@ from typing import Dict, List, Optional
 
 
 @dataclass
-class NCCLConfig:
+class XDPConfig:
     num_nodes: int = 2
     gpus_per_node: int = 4
-    network_bandwidth_gbps: float = 100.0
-    network_latency_us: float = 2.0
+    network_bandwidth_gbps: float = 40.0
+    network_latency_us: float = 8.0
     collective_types: List[str] = field(default_factory=lambda: [
         "AllReduce", "AllGather", "ReduceScatter", "Broadcast"
     ])
+    umem_frame_size: int = 2048
+    zero_copy: bool = True
 
 
-class NCCLSimulator:
-    def __init__(self, config: Optional[NCCLConfig] = None):
-        self.config = config or NCCLConfig()
+class XDPSimulator:
+    def __init__(self, config: Optional[XDPConfig] = None):
+        self.config = config or XDPConfig()
         self.total_ranks = self.config.num_nodes * self.config.gpus_per_node
         self.collective_models = {
-            "AllReduce":     {"alpha": 15.0, "beta": 0.8, "gamma": 0.02},
-            "AllGather":     {"alpha": 12.0, "beta": 1.0, "gamma": 0.015},
-            "ReduceScatter": {"alpha": 14.0, "beta": 0.9, "gamma": 0.018},
-            "Broadcast":     {"alpha":  8.0, "beta": 0.5, "gamma": 0.010},
+            "AllReduce":     {"alpha": 40.0, "beta": 1.6, "gamma": 0.045},
+            "AllGather":     {"alpha": 35.0, "beta": 1.8, "gamma": 0.040},
+            "ReduceScatter": {"alpha": 38.0, "beta": 1.7, "gamma": 0.042},
+            "Broadcast":     {"alpha": 25.0, "beta": 1.2, "gamma": 0.030},
         }
-        self.noise_std = 0.05
+        self.noise_std = 0.08
 
     def _bandwidth(self, size_mb: float) -> float:
         peak_mbps = self.config.network_bandwidth_gbps * 1000 / 8
-        overhead = np.exp(-size_mb / 1000) * 0.1
+        overhead = 0.05 if self.config.zero_copy else 0.15
         return peak_mbps * (1 - overhead)
 
     def simulate_collective(self, collective_type: str, data_size_mb: float,
@@ -41,10 +43,13 @@ class NCCLSimulator:
         model = self.collective_models[collective_type]
         log_size = np.log2(max(1, data_size_mb))
         bw = self._bandwidth(data_size_mb)
+        pkts = max(1, int(data_size_mb * 1024 * 1024 / self.config.umem_frame_size))
+        ebpf_overhead_us = pkts * 0.0015
         base_us = (model["alpha"]
                    + model["beta"] * log_size
                    + data_size_mb * 1000 / bw
-                   + np.log2(self.total_ranks) * model["gamma"] * data_size_mb)
+                   + np.log2(self.total_ranks) * model["gamma"] * data_size_mb
+                   + ebpf_overhead_us)
         latencies = []
         for _ in range(num_repeats):
             lat = base_us * np.random.normal(1.0, self.noise_std)
@@ -61,6 +66,7 @@ class NCCLSimulator:
             "data_size_mb": data_size_mb,
             "collective":   collective_type,
             "total_ranks":  self.total_ranks,
+            "packets_processed": pkts,
         }
 
     def simulate_iteration(self, model_size_mb: float,
@@ -108,7 +114,7 @@ class NCCLSimulator:
                     "latency_ms": ev["latency_ms"],
                     "size_mb": ev["size_mb"],
                     "timestamp_ms": total_ms + ev["timestamp"],
-                    "backend": "nccl",
+                    "backend": "xdp",
                 })
             total_ms += r["total_communication_ms"]
         df = pd.DataFrame(events)
@@ -121,5 +127,5 @@ class NCCLSimulator:
             "total_ranks": self.total_ranks,
             "num_nodes": self.config.num_nodes,
             "gpus_per_node": self.config.gpus_per_node,
-            "backend": "nccl",
+            "backend": "xdp",
         }

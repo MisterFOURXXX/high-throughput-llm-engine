@@ -1,11 +1,10 @@
 # ============================================
 # Dockerfile.multinode
-# Multi-node Docker image for NCCL experiments
+# Multi-node Docker image for Oracle Cloud NCCL experiments
 # ============================================
 
 FROM nvidia/cuda:12.4.0-devel-ubuntu22.04
 
-# Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app:$PYTHONPATH
@@ -22,36 +21,25 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     wget \
+    unzip \
     openmpi-bin \
     openmpi-common \
     libnccl2 \
     libnccl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create symlinks for Python
+# Symlinks
 RUN ln -sf /usr/bin/python3 /usr/bin/python && \
     ln -sf /usr/bin/pip3 /usr/bin/pip
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements first
+# Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir kubernetes pyyaml pandas numpy matplotlib seaborn
 
-# Install additional dependencies
-RUN pip3 install --no-cache-dir \
-    kubernetes \
-    pyyaml \
-    pandas \
-    numpy \
-    matplotlib \
-    seaborn \
-    boto3
-
-# Copy the project
+# Copy project
 COPY . .
 
 # Build C++ load generator
@@ -60,14 +48,13 @@ RUN mkdir -p benchmarks/build && \
     cmake .. && \
     make
 
-# Create necessary directories
+# Directories
 RUN mkdir -p artifacts/nccl_traces
 
-# Set NCCL environment variables
+# NCCL environment
 ENV NCCL_DEBUG=INFO
 ENV NCCL_DEBUG_SUBSYS=INIT,COLL,ENV
 ENV NCCL_LOGFILE=/var/log/nccl_trace.log
 ENV NCCL_SOCKET_IFNAME=eth0
 
-# Default command
-CMD ["python3", "scripts/run_simulation.py", "--nodes", "2", "--gpus-per-node", "4"]
+CMD ["python3", "scripts/run_simulation.py", "--nodes", "2"]

@@ -1,0 +1,10 @@
+tenancy_ocid        = "ocid1.tenancy.oc1..xxxxx"
+user_ocid           = "ocid1.user.oc1..xxxxx"
+fingerprint         = "xx:xx:xx:..."
+private_key_path    = "/home/ubuntu/.oci/oci_api_key.pem"
+compartment_ocid    = "ocid1.compartment.oc1..xxxxx"
+region              = "eu-frankfurt-1"
+ssh_public_key      = "ssh-rsa AAAA... your-key"
+instance_image_ocid = "ocid1.image.oc1..xxxxx"
+node_count          = 2
+create_network      = true

@@ -1,5 +1,9 @@
-from .paged_attention_profiler import PagedAttentionMemoryTracker
 from .memory_allocator import MemoryAllocatorProfiler
+from .paged_attention_profiler import PagedAttentionMemoryTracker
 from .trace_logger import TraceLogger
 
-__all__ = ["PagedAttentionMemoryTracker", "MemoryAllocatorProfiler", "TraceLogger"]
+__all__ = [
+    "MemoryAllocatorProfiler",
+    "PagedAttentionMemoryTracker",
+    "TraceLogger",
+]
