@@ -12,6 +12,73 @@
 
 ---
 
+## Table of content
+
+- 1. Project Overview
+  - 1.1. Simulation
+- 2. Foundation - NCCL, XDP, and Gloo
+  - 2.1. NCCL — NVIDIA Collective Communications Library
+    - 2.1.1 What It Is
+    - 2.1.2 What Problem It Solves
+    - 2.1.3 How It Works
+    - 2.1.4 Key Technologies
+    - 2.1.5 Why It's Fast
+    - 2.1.7 When To Use NCCL
+    - 2.1.8 When NCCL Isn't Available
+  - 2.2. XDP — eXpress Data Path
+    - 2.2.1 What It Is
+    - 2.2.2 What Problem It Solves
+    - 2.2.3 How It Works
+    - 2.2.4 Key Concepts
+    - 2.2.5 Where XDP Is Used
+    - 2.2.6 Why XDP Is Not a Full Replacement for NCCL
+    - 2.2.8 When To Use XDP
+  - 2.3. Gloo — Facebook's Collective Communication Library
+    - 2.3.1 What It Is
+    - 2.3.2 What Problem It Solves
+    - 2.3.3 How It Works
+    - 2.3.4 Key Limitations
+    - 2.3.5 Where Gloo Is Used
+    - 2.3.7 When To Use Gloo
+    - 2.3.8 When NOT To Use Gloo
+- 3. Approach
+  - 3.1. Simulation Pipeline
+    - Stage 1: Infrastructure Simulation (Terraform + Kubernetes)
+    - Stage 2: Backend Simulation (The Core Experiment)
+    - Stage 3: Workload Simulation
+    - Stage 4: Resource Monitoring and Visualization
+  - 3.2 How the Project Runs Experiments
+    - 3.2.1 LLMs Replacement for Experiments
+    - 3.2.2 Example Computation (First Iteration, First AllReduce, NCCL)
+    - 3.2.3 What the Load Actually Simulates
+- 4. Evaluation
+  - 4.1 Primary Metrics
+  - 4.2 Secondary Metrics (Plot-Only)
+- 5. Results Interpretion
+  - 5.1 Latency Analysis
+  - 5.2 The Three Latency Tiers
+  - 5.3 Resource Interpretation
+  - 5.4 Tail Latency Analysis
+  - 5.5 The Trade-off Plot Interpretation
+  - 5.6 eBPF Monitoring Results
+- 6. Step-by-Step Guide: Getting Started from Scratch
+  - 6.1. Prerequisites
+  - 6.2. Repository Layout Reference
+  - Step 1 — Clone the Repository
+  - Step 2 — Full Clean (Fresh Start)
+  - Step 3 — Silent Setup
+  - Step 4 — Run All Experiments
+  - Step 5 — Inspect the Artifacts
+  - Step 6 — View the JSON Report
+  - Step 7 — Manual Re-Run (After Setup)
+  - Step 8 — Experiment with Different Parameters
+  - Step 9 — Real Terraform Validation (Optional, No Credentials)
+  - Step 10 — Full Reset (Nuclear Clean)
+- 7. Conclusion
+- About
+ 
+---
+
 ## 1. Project Overview
 
 This project is a **deterministic, systems-level simulator** for evaluating **collective communication backends** used in multi-node Large Language Model (LLM) training and inference. It does **not** run actual LLM training (like PyTorch's DeepSpeed or HuggingFace), nor does it use real GPUs or send real network packets. Instead, it models the performance of three communication libraries:
