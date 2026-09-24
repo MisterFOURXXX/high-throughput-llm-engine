@@ -1,5 +1,17 @@
 # High-Throughput LLM Engine (Collective Communication Simulator)
 
+> A deterministic, systems-level simulator for evaluating collective communication backends in multi-node LLM training and inference. It models **NCCL (RDMA/InfiniBand)**, **XDP (AF_XDP kernel-bypass)**, and **Gloo (TCP/IP)** using mathematical latency models — without real GPUs or LLMs — and includes infrastructure simulation, workload modeling, resource monitoring, and performance analysis.
+
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Terraform](https://img.shields.io/badge/terraform-IaC-7B42BC.svg)](https://www.terraform.io/)
+[![Kubernetes](https://img.shields.io/badge/kubernetes-simulated-326CE5.svg)](https://kubernetes.io/)
+[![NCCL](https://img.shields.io/badge/NCCL-RDMA-76B900.svg)](https://developer.nvidia.com/nccl)
+[![XDP](https://img.shields.io/badge/XDP-eBPF-orange.svg)](https://www.iovisor.org/technology/xdp)
+[![Gloo](https://img.shields.io/badge/Gloo-TCP%2FIP-lightgrey.svg)](https://github.com/facebookincubator/gloo)
+[![Matplotlib](https://img.shields.io/badge/plots-Matplotlib-11557C.svg)](https://matplotlib.org/)
+
+---
+
 ## 1. Project Overview
 
 This project is a **deterministic, systems-level simulator** for evaluating **collective communication backends** used in multi-node Large Language Model (LLM) training and inference. It does **not** run actual LLM training (like PyTorch's DeepSpeed or HuggingFace), nor does it use real GPUs or send real network packets. Instead, it models the performance of three communication libraries:
